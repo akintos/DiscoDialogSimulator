@@ -66,14 +66,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="DialogueId.cs" />
-    <Compile Include="DialogueNumber.cs" />
     <Compile Include="DialogueSimulator.cs" />
     <Compile Include="DialogueSystem\ArticyBridge.cs" />
     <Compile Include="DialogueSystem\Difficulty.cs" />
     <Compile Include="DialogueSystem\FieldNames.cs" />
     <Compile Include="DialogueSystem\SkillType.cs" />
-    <Compile Include="WeblateClient.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

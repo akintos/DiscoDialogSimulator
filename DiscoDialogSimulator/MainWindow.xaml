@@ -33,7 +33,6 @@
         <Button x:Name="ButtonStart" Grid.Row="0" Grid.Column="2" Margin="2" Content=" Start " Click="ButtonStart_Click"/>
         <Button x:Name="ButtonClear" Grid.Row="1" Grid.Column="2" Margin="2" Content="Clear" Click="ButtonClear_Click"/>
         <Button x:Name="ButtonFindPrevious" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="Find previous dialogues" Click="ButtonFindPrevious_Click"/>
-        <Label x:Name="LabelAuth" Grid.Row="4" Grid.Column="1" Margin="2" Grid.ColumnSpan="2" Content="인증 결과" IsHitTestVisible="False"/>
         <CheckBox x:Name="CheckBoxShowDialogueId" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Show Dialogue ID" Click="CheckBoxShowDialogueId_Checked" />
         <CheckBox x:Name="CheckBoxShowArticyId" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Show Articy ID" Click="CheckBoxShowArticyId_Checked" />
     </Grid>

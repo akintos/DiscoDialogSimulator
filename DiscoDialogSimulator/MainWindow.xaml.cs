@@ -35,45 +35,8 @@ namespace DiscoDialogSimulator
             InitializeComponent();
 
             var db = DialogueDatabase.Deserialize("data/database.json");
-            var dialogueNo = DialogueNumber.LoadJson("data/dialogue_no.json");
-            var dialogueId = DialogueId.LoadJson("data/dialogue_id.json");
 
-            WeblateClient wlc = null;
-            string authResult = string.Empty;
-
-            if (File.Exists(KEY_FILENAME))
-            {
-                string key = File.ReadAllText(KEY_FILENAME).Trim();
-                if (key.Length == 40)
-                {
-                    wlc = new WeblateClient("http://akintos.iptime.org/api/", key);
-                    if (!wlc.TestAuth("disco-elysium"))
-                    {
-                        wlc = null;
-                        authResult = "인증 실패";
-                    }
-                    else
-                    {
-                        authResult = "인증 성공";
-                    }
-                }
-                else if (key.Length == 0)
-                {
-                    authResult = "키 파일이 비어 있음";
-                }
-                else
-                {
-                    authResult = "키 길이 불일치";
-                }
-            }
-            else
-            {
-                authResult = "키 파일이 없음";
-            }
-
-            LabelAuth.Content = "인증 결과 : " + authResult;
-
-            sim = new DialogueSimulator(db, dialogueNo, dialogueId, wlc);
+            sim = new DialogueSimulator(db);
             sim.NavigateHandler += HandleRequestNavigate;
 
             RichTextBoxDialogue.Document = new FlowDocument();

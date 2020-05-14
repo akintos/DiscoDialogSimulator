@@ -16,22 +16,15 @@ namespace DiscoDialogSimulator
     public class DialogueSimulator
     {
         private readonly DialogueDatabase db;
-        private readonly DialogueNumber dialogueNo;
-
-        private readonly DialogueId dialogueId;
-        private readonly WeblateClient wlc;
 
         public event RequestNavigateEventHandler NavigateHandler;
 
         public bool ShowDialogueId { get; set; } = false;
         public bool ShowArticyId { get; set; } = false;
 
-        public DialogueSimulator(DialogueDatabase db, DialogueNumber dialogueNo, DialogueId dialogueId, WeblateClient wlc)
+        public DialogueSimulator(DialogueDatabase db)
         {
             this.db = db;
-            this.dialogueNo = dialogueNo;
-            this.dialogueId = dialogueId;
-            this.wlc = wlc;
         }
 
         public Paragraph GetDialogueParagraph(int conversationId, int dialogueId)
@@ -118,9 +111,8 @@ namespace DiscoDialogSimulator
                 {
                     if (string.IsNullOrWhiteSpace(dialogue["tooltip" + i])) continue;
 
-                    var modifierRun = MakeDialogueHyperlinkText(dialogue, "tooltip" + i);
                     var modifier = dialogue["modifier" + i];
-                    modifierRun.Inlines.Add(new Run(" " + modifier));
+                    var modifierRun = new Run(dialogue["tooltip" + i] + " " + modifier);
                     modifierRun.Foreground = Brushes.Gray;
                     paragraph.Inlines.Add(new Run("\n    "));
                     paragraph.Inlines.Add(modifierRun);
@@ -208,30 +200,15 @@ namespace DiscoDialogSimulator
             return db.GetDialogueEntry(articyId);
         }
 
-        public Hyperlink MakeDialogueHyperlinkText(DialogueEntry entry, string fieldName)
+        public Run MakeDialogueHyperlinkText(DialogueEntry entry, string fieldName)
         {
-            int no = dialogueNo[fieldName + "/" + entry[FieldNames.ARTICY_ID]];
             var textRun = new Run(GetTranslatedField(entry, fieldName));
-            Hyperlink textLink = new Hyperlink(textRun)
-            {
-                NavigateUri = new Uri("http://akintos.iptime.org/translate/disco-elysium/dialogue/ko/?offset=" + no),
-                TextDecorations = null,            // Remove underline
-                Foreground = Brushes.Black        // Remove blue hyperlink color
-            };
-            textLink.RequestNavigate += NavigateHandler;
 
-            return textLink;
+            return textRun;
         }
 
         private string GetTranslatedField(DialogueEntry entry, string fieldName)
         {
-            string key = fieldName + "/" + entry[FieldNames.ARTICY_ID];
-            if (wlc != null && dialogueId != null && dialogueId.TryGetValue(key, out int id))
-            {
-                var tr = wlc.GetTranslation(id);
-                if (tr != null && tr.translated)
-                    return tr.target;
-            }
             return entry[fieldName];
         }
     }
