@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:DiscoDialogSimulator"
         mc:Ignorable="d"
         Style="{StaticResource Hybrid.WindowTheme}"
-        Title="Disco Elysium Dialogue Simulator" Height="600" Width="1000">
+        Title="Disco Elysium Dialogue Simulator by Akintos" Height="600" Width="1000">
     <Grid Margin="1">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -30,11 +30,11 @@
         <Label x:Name="LabelDialogue" Grid.Row="1" Grid.Column="1" Margin="2" Content="Dialogue ID" IsHitTestVisible="False" Foreground="Gray"/>
         <TextBox x:Name="TextBoxArticyID" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" TextChanged="TextBoxArticyID_TextChanged"/>
         <Label x:Name="LabelArticyID" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="Articy ID" IsHitTestVisible="False" Foreground="Gray"/>
-        <Button x:Name="ButtonStart" Grid.Row="0" Grid.Column="2" Margin="2" Content=" 시작 " Click="ButtonStart_Click"/>
-        <Button x:Name="ButtonClear" Grid.Row="1" Grid.Column="2" Margin="2" Content="지우기" Click="ButtonClear_Click"/>
-        <Button x:Name="ButtonFindPrevious" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="이전 대화문 찾기" Click="ButtonFindPrevious_Click"/>
+        <Button x:Name="ButtonStart" Grid.Row="0" Grid.Column="2" Margin="2" Content=" Start " Click="ButtonStart_Click"/>
+        <Button x:Name="ButtonClear" Grid.Row="1" Grid.Column="2" Margin="2" Content="Clear" Click="ButtonClear_Click"/>
+        <Button x:Name="ButtonFindPrevious" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="Find previous dialogues" Click="ButtonFindPrevious_Click"/>
         <Label x:Name="LabelAuth" Grid.Row="4" Grid.Column="1" Margin="2" Grid.ColumnSpan="2" Content="인증 결과" IsHitTestVisible="False"/>
-        <CheckBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Dialogue ID 표시"/>
-        <CheckBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Articy ID 표시"/>
+        <CheckBox x:Name="CheckBoxShowDialogueId" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Show Dialogue ID" Click="CheckBoxShowDialogueId_Checked" />
+        <CheckBox x:Name="CheckBoxShowArticyId" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Show Articy ID" Click="CheckBoxShowArticyId_Checked" />
     </Grid>
 </Window>

@@ -2,6 +2,7 @@
 using DiscoDialogSimulator.Database.Assets;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -77,9 +78,41 @@ namespace DiscoDialogSimulator
 
             RichTextBoxDialogue.Document = new FlowDocument();
 
-            AddParagraph(new Paragraph(new Run("오른쪽 칸에 대화문 번호와 대사 번호를 입력하고 [시작] 버튼을 누르세요.")));
+            AddParagraph(new Paragraph(new Run("Enter Conversation/Dialogue/Articy ID and press [Start] button.")));
 
-            // ShowDialogueEntry(627, 1);
+            ReadConfiguration();
+        }
+
+        private void ReadConfiguration()
+        {
+            CheckBoxShowArticyId.IsChecked = sim.ShowArticyId = bool.Parse(ConfigurationManager.AppSettings["ShowArticyId"] ?? "false");
+            CheckBoxShowDialogueId.IsChecked =  sim.ShowDialogueId = bool.Parse(ConfigurationManager.AppSettings["ShowDialogueId"] ?? "false");
+        }
+
+        private void SaveConfiguration()
+        {
+            try
+            {
+                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var settings = configFile.AppSettings.Settings;
+
+                if (settings["ShowArticyId"] == null)
+                    settings.Add("ShowArticyId", sim.ShowArticyId.ToString());
+                else
+                    settings["ShowArticyId"].Value = sim.ShowArticyId.ToString();
+
+                if (settings["ShowDialogueId"] == null)
+                    settings.Add("ShowDialogueId", sim.ShowDialogueId.ToString());
+                else
+                    settings["ShowDialogueId"].Value = sim.ShowDialogueId.ToString();
+
+                configFile.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+            }
+            catch (ConfigurationErrorsException)
+            {
+                Console.WriteLine("Error writing app settings");
+            }
         }
 
         private void ShowDialogueEntry(int conversationId, int dialogueId)
@@ -165,8 +198,9 @@ namespace DiscoDialogSimulator
 
         private void ButtonClear_Click(object sender, RoutedEventArgs e)
         {
-            TextBoxConversation.Text = "";
-            TextBoxDialogue.Text = "";
+            TextBoxConversation.Clear();
+            TextBoxDialogue.Clear();
+            TextBoxArticyID.Clear();
         }
 
         private void ButtonFindPrevious_Click(object sender, RoutedEventArgs e)
@@ -218,15 +252,28 @@ namespace DiscoDialogSimulator
             conversationId = 0;
             dialogueId = 0;
 
+            if (!string.IsNullOrEmpty(TextBoxArticyID.Text))
+            {
+                var entry = sim.GetDialogueEntry(TextBoxArticyID.Text);
+                if (entry == null)
+                {
+                    MessageBox.Show($"Invalid Articy ID : \"{TextBoxArticyID.Text}\"");
+                    return false;
+                }
+                conversationId = entry.conversationID;
+                dialogueId = entry.id;
+                return true;
+            }
+
             if (!int.TryParse(TextBoxConversation.Text, out conversationId))
             {
-                MessageBox.Show($"올바르지 않은 대화문 번호 : \"{TextBoxConversation.Text}\"");
+                MessageBox.Show($"Invalid conversation no : \"{TextBoxConversation.Text}\"");
                 return false;
             }
 
             if (!int.TryParse(TextBoxDialogue.Text, out dialogueId))
             {
-                MessageBox.Show($"올바르지 않은 대사 번호 : \"{TextBoxDialogue.Text}\"");
+                MessageBox.Show($"Invalid dialogue no : \"{TextBoxDialogue.Text}\"");
                 return false;
             }
 
@@ -236,11 +283,22 @@ namespace DiscoDialogSimulator
             }
             catch (Exception)
             {
-                MessageBox.Show($"존재하지 않는 대화문/대사 번호 : \"{conversationId}/{dialogueId}\"");
+                MessageBox.Show($"Missing conversation/dialogue no : \"{conversationId}/{dialogueId}\"");
                 return false;
             }
             return true;
         }
 
+        private void CheckBoxShowDialogueId_Checked(object sender, RoutedEventArgs e)
+        {
+            sim.ShowDialogueId = CheckBoxShowDialogueId.IsChecked.Value;
+            SaveConfiguration();
+        }
+
+        private void CheckBoxShowArticyId_Checked(object sender, RoutedEventArgs e)
+        {
+            sim.ShowArticyId = CheckBoxShowArticyId.IsChecked.Value;
+            SaveConfiguration();
+        }
     }
 }

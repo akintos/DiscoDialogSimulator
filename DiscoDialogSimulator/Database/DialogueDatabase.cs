@@ -38,7 +38,9 @@ namespace DiscoDialogSimulator.Database
 
         public DialogueEntry GetDialogueEntry(string articyId)
         {
-            return DialogueArticyDict[articyId];
+            if (DialogueArticyDict.TryGetValue(articyId, out var entry))
+                return entry;
+            return null;
         }
 
         private Dictionary<int, Actor> ActorDict
@@ -72,6 +74,7 @@ namespace DiscoDialogSimulator.Database
                     {
                         foreach (var dialogue in conversation.dialogueEntries)
                         {
+                            if (!dialogue.fields.ContainsKey(FieldNames.DIALOGUE_TEXT) || string.IsNullOrEmpty(dialogue[FieldNames.DIALOGUE_TEXT])) continue;
                             _dialogueArticyDict.Add(dialogue[FieldNames.ARTICY_ID], dialogue);
                         }
                     }

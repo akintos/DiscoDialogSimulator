@@ -23,6 +23,9 @@ namespace DiscoDialogSimulator
 
         public event RequestNavigateEventHandler NavigateHandler;
 
+        public bool ShowDialogueId { get; set; } = false;
+        public bool ShowArticyId { get; set; } = false;
+
         public DialogueSimulator(DialogueDatabase db, DialogueNumber dialogueNo, DialogueId dialogueId, WeblateClient wlc)
         {
             this.db = db;
@@ -44,6 +47,24 @@ namespace DiscoDialogSimulator
             bool isWhiteCheck = dialogue.IsWhiteCheck();
             bool isRedCheck = dialogue.IsRedCheck();
             bool isPassiveCheck = dialogue.IsPassiveCheck();
+
+            if (ShowArticyId || ShowDialogueId)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append("[");
+                if (ShowDialogueId)
+                    sb.Append(dialogue.conversationID + "/" + dialogue.id);
+                if (ShowArticyId && ShowDialogueId)
+                    sb.Append(":");
+                if (ShowArticyId)
+                    sb.Append(dialogue[FieldNames.ARTICY_ID]);
+                sb.Append("]\n");
+
+                var numberRun = new Run(sb.ToString());
+                numberRun.Foreground = Brushes.Gray;
+                paragraph.Inlines.Add(numberRun);
+            }
 
             if (isWhiteCheck || isRedCheck)
             {
@@ -180,6 +201,11 @@ namespace DiscoDialogSimulator
         public DialogueEntry GetDialogueEntry(int conversationId, int dialogueId)
         {
             return db.GetDialogueEntry(conversationId, dialogueId);
+        }
+
+        public DialogueEntry GetDialogueEntry(string articyId)
+        {
+            return db.GetDialogueEntry(articyId);
         }
 
         public Hyperlink MakeDialogueHyperlinkText(DialogueEntry entry, string fieldName)
