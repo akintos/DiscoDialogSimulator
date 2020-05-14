@@ -1,0 +1,16 @@
+﻿<Application x:Class="DiscoDialogSimulator.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:DiscoDialogSimulator"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Candido;component/Hybrid.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Workaround for ResourceDictionary bug/optimization. Don't remove line below. -->
+            <Style TargetType="{x:Type Rectangle}" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

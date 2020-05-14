@@ -1,0 +1,40 @@
+﻿<Window x:Class="DiscoDialogSimulator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DiscoDialogSimulator"
+        mc:Ignorable="d"
+        Style="{StaticResource Hybrid.WindowTheme}"
+        Title="Disco Elysium Dialogue Simulator" Height="600" Width="1000">
+    <Grid Margin="1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="8*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <RichTextBox x:Name="RichTextBoxDialogue" Margin="2" Grid.RowSpan="8" IsReadOnly="True" IsDocumentEnabled="True" Padding="3" VerticalScrollBarVisibility="Visible" FontSize="16"/>
+        <TextBox x:Name="TextBoxConversation" Grid.Row="0" Grid.Column="1" Margin="2" MinWidth="100" TextChanged="TextBoxConversation_TextChanged"/>
+        <Label x:Name="LabelConversation" Grid.Row="0" Grid.Column="1" Margin="2" Content="Conversation ID" IsHitTestVisible="False" Foreground="Gray"/>
+        <TextBox x:Name="TextBoxDialogue" Grid.Row="1" Grid.Column="1" Margin="2" TextChanged="TextBoxDialogue_TextChanged"/>
+        <Label x:Name="LabelDialogue" Grid.Row="1" Grid.Column="1" Margin="2" Content="Dialogue ID" IsHitTestVisible="False" Foreground="Gray"/>
+        <TextBox x:Name="TextBoxArticyID" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" TextChanged="TextBoxArticyID_TextChanged"/>
+        <Label x:Name="LabelArticyID" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="Articy ID" IsHitTestVisible="False" Foreground="Gray"/>
+        <Button x:Name="ButtonStart" Grid.Row="0" Grid.Column="2" Margin="2" Content=" 시작 " Click="ButtonStart_Click"/>
+        <Button x:Name="ButtonClear" Grid.Row="1" Grid.Column="2" Margin="2" Content="지우기" Click="ButtonClear_Click"/>
+        <Button x:Name="ButtonFindPrevious" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="이전 대화문 찾기" Click="ButtonFindPrevious_Click"/>
+        <Label x:Name="LabelAuth" Grid.Row="4" Grid.Column="1" Margin="2" Grid.ColumnSpan="2" Content="인증 결과" IsHitTestVisible="False"/>
+        <CheckBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Dialogue ID 표시"/>
+        <CheckBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Articy ID 표시"/>
+    </Grid>
+</Window>
