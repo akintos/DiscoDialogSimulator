@@ -53,23 +53,15 @@ namespace DiscoDialogSimulator
                         authResult = "인증 실패";
                     }
                     else
-                    {
                         authResult = "인증 성공";
-                    }
                 }
                 else if (key.Length == 0)
-                {
                     authResult = "키 파일이 비어 있음";
-                }
                 else
-                {
                     authResult = "키 길이 불일치";
-                }
             }
             else
-            {
                 authResult = "키 파일이 없음";
-            }
 
             LabelAuth.Content = "인증 결과 : " + authResult;
 
@@ -86,7 +78,12 @@ namespace DiscoDialogSimulator
         private void ReadConfiguration()
         {
             CheckBoxShowArticyId.IsChecked = sim.ShowArticyId = bool.Parse(ConfigurationManager.AppSettings["ShowArticyId"] ?? "false");
+            CheckBoxShowDialogueNo.IsChecked = sim.ShowDialogueNo = bool.Parse(ConfigurationManager.AppSettings["ShowDialogueNo"] ?? "false");
             CheckBoxShowDialogueId.IsChecked =  sim.ShowDialogueId = bool.Parse(ConfigurationManager.AppSettings["ShowDialogueId"] ?? "false");
+            CheckBoxEnableTranslation.IsChecked = sim.EnableTranslation = bool.Parse(ConfigurationManager.AppSettings["EnableTranslation"] ?? "true");
+            CheckBoxShowSource.IsChecked = sim.ShowSource = bool.Parse(ConfigurationManager.AppSettings["ShowSource"] ?? "false");
+            CheckBoxShowCondition.IsChecked = sim.ShowCondition = bool.Parse(ConfigurationManager.AppSettings["ShowCondition"] ?? "false");
+            SaveConfiguration();
         }
 
         private void SaveConfiguration()
@@ -96,15 +93,12 @@ namespace DiscoDialogSimulator
                 var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 var settings = configFile.AppSettings.Settings;
 
-                if (settings["ShowArticyId"] == null)
-                    settings.Add("ShowArticyId", sim.ShowArticyId.ToString());
-                else
-                    settings["ShowArticyId"].Value = sim.ShowArticyId.ToString();
-
-                if (settings["ShowDialogueId"] == null)
-                    settings.Add("ShowDialogueId", sim.ShowDialogueId.ToString());
-                else
-                    settings["ShowDialogueId"].Value = sim.ShowDialogueId.ToString();
+                settings.SaveSetting("ShowArticyId", sim.ShowArticyId.ToString());
+                settings.SaveSetting("ShowDialogueNo", sim.ShowDialogueId.ToString());
+                settings.SaveSetting("ShowDialogueId", sim.ShowDialogueId.ToString());
+                settings.SaveSetting("EnableTranslation", sim.EnableTranslation.ToString());
+                settings.SaveSetting("ShowSource", sim.ShowSource.ToString());
+                settings.SaveSetting("ShowCondition", sim.ShowCondition.ToString());
 
                 configFile.Save(ConfigurationSaveMode.Modified);
                 ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
@@ -214,7 +208,7 @@ namespace DiscoDialogSimulator
                 var history = new List<DialogueEntry>();
                 var currentEntry = targetEntry;
 
-                for (int i = 0; i < 10; i++)
+                while (history.Count < 10)
                 {
                     var previousEntries = sim.FindPreviousEntry(currentEntry);
                     if (previousEntries.Count == 0)
@@ -222,13 +216,14 @@ namespace DiscoDialogSimulator
 
                     currentEntry = previousEntries[0];
 
-                    if (!history.Contains(currentEntry))
-                        history.Add(currentEntry);
-                    else
+                    if (history.Contains(currentEntry))
                         break;
+
+                    if (currentEntry.outgoingLinks.Count == 1)
+                        history.Add(currentEntry);
                 }
 
-                for (int i = history.Count - 1; i > 0; i--)
+                for (int i = history.Count - 1; i >= 0; i--)
                 {
                     var prevParagraph = sim.GetDialogueParagraph(history[i]);
                     if (prevParagraph != null) AddParagraph(prevParagraph);
@@ -289,15 +284,23 @@ namespace DiscoDialogSimulator
             return true;
         }
 
-        private void CheckBoxShowDialogueId_Checked(object sender, RoutedEventArgs e)
+        private void OptionCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            sim.ShowDialogueId = CheckBoxShowDialogueId.IsChecked.Value;
-            SaveConfiguration();
-        }
+            if (sender == CheckBoxShowDialogueNo)
+                sim.ShowDialogueNo = CheckBoxShowDialogueNo.IsChecked.Value;
+            else if (sender == CheckBoxShowDialogueId)
+                sim.ShowDialogueId = CheckBoxShowDialogueId.IsChecked.Value;
+            else if (sender == CheckBoxShowArticyId)
+                sim.ShowArticyId = CheckBoxShowArticyId.IsChecked.Value;
+            else if (sender == CheckBoxEnableTranslation)
+                sim.EnableTranslation = CheckBoxEnableTranslation.IsChecked.Value;
+            else if (sender == CheckBoxShowSource)
+                sim.ShowSource = CheckBoxShowSource.IsChecked.Value;
+            else if (sender == CheckBoxShowCondition)
+                sim.ShowCondition = CheckBoxShowCondition.IsChecked.Value;
+            else
+                return;
 
-        private void CheckBoxShowArticyId_Checked(object sender, RoutedEventArgs e)
-        {
-            sim.ShowArticyId = CheckBoxShowArticyId.IsChecked.Value;
             SaveConfiguration();
         }
     }

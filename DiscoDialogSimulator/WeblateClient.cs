@@ -60,6 +60,7 @@ namespace DiscoDialogSimulator
         public string flags { get; set; }
         public bool fuzzy { get; set; }
         public bool translated { get; set; }
+        public bool approved { get; set; }
         public int position { get; set; }
         public int id { get; set; }
         public string web_url { get; set; }

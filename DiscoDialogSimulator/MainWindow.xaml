@@ -16,6 +16,10 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -23,18 +27,22 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <RichTextBox x:Name="RichTextBoxDialogue" Margin="2" Grid.RowSpan="8" IsReadOnly="True" IsDocumentEnabled="True" Padding="3" VerticalScrollBarVisibility="Visible" FontSize="16"/>
+        <RichTextBox x:Name="RichTextBoxDialogue" Margin="2" Grid.RowSpan="12" IsReadOnly="True" IsDocumentEnabled="True" Padding="3" VerticalScrollBarVisibility="Visible" FontSize="16"/>
         <TextBox x:Name="TextBoxConversation" Grid.Row="0" Grid.Column="1" Margin="2" MinWidth="100" TextChanged="TextBoxConversation_TextChanged"/>
         <Label x:Name="LabelConversation" Grid.Row="0" Grid.Column="1" Margin="2" Content="Conversation ID" IsHitTestVisible="False" Foreground="Gray"/>
         <TextBox x:Name="TextBoxDialogue" Grid.Row="1" Grid.Column="1" Margin="2" TextChanged="TextBoxDialogue_TextChanged"/>
         <Label x:Name="LabelDialogue" Grid.Row="1" Grid.Column="1" Margin="2" Content="Dialogue ID" IsHitTestVisible="False" Foreground="Gray"/>
         <TextBox x:Name="TextBoxArticyID" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" TextChanged="TextBoxArticyID_TextChanged"/>
         <Label x:Name="LabelArticyID" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="Articy ID" IsHitTestVisible="False" Foreground="Gray"/>
-        <Button x:Name="ButtonStart" Grid.Row="0" Grid.Column="2" Margin="2" Content=" Start " Click="ButtonStart_Click"/>
-        <Button x:Name="ButtonClear" Grid.Row="1" Grid.Column="2" Margin="2" Content="Clear" Click="ButtonClear_Click"/>
-        <Button x:Name="ButtonFindPrevious" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="Find previous dialogues" Click="ButtonFindPrevious_Click"/>
+        <Button x:Name="ButtonStart" Grid.Row="0" Grid.Column="2" Margin="2" Content=" 시작 " Click="ButtonStart_Click"/>
+        <Button x:Name="ButtonClear" Grid.Row="1" Grid.Column="2" Margin="2" Content="비우기" Click="ButtonClear_Click"/>
+        <Button x:Name="ButtonFindPrevious" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Content="이전 대화문 찾기" Click="ButtonFindPrevious_Click"/>
         <Label x:Name="LabelAuth" Grid.Row="4" Grid.Column="1" Margin="2" Grid.ColumnSpan="2" Content="인증 결과" IsHitTestVisible="False"/>
-        <CheckBox x:Name="CheckBoxShowDialogueId" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Show Dialogue ID" Click="CheckBoxShowDialogueId_Checked" />
-        <CheckBox x:Name="CheckBoxShowArticyId" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Show Articy ID" Click="CheckBoxShowArticyId_Checked" />
+        <CheckBox x:Name="CheckBoxShowDialogueNo" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Dialogue 번호 표시" Click="OptionCheckBox_Checked" />
+        <CheckBox x:Name="CheckBoxShowDialogueId" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Dialogue ID 표시" Click="OptionCheckBox_Checked" />
+        <CheckBox x:Name="CheckBoxShowArticyId" Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="Articy ID 표시" Click="OptionCheckBox_Checked" />
+        <CheckBox x:Name="CheckBoxEnableTranslation" Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="번역 활성화" Click="OptionCheckBox_Checked" />
+        <CheckBox x:Name="CheckBoxShowSource" Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="원문 병기" Click="OptionCheckBox_Checked" />
+        <CheckBox x:Name="CheckBoxShowCondition" Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="2" Margin="6" Content="조건문 표시" Click="OptionCheckBox_Checked" />
     </Grid>
 </Window>

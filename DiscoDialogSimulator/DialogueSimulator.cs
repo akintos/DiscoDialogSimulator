@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Media.TextFormatting;
 using System.Windows.Navigation;
 
 namespace DiscoDialogSimulator
@@ -23,8 +24,13 @@ namespace DiscoDialogSimulator
 
         public event RequestNavigateEventHandler NavigateHandler;
 
+        public bool ShowDialogueNo { get; set; } = false;
         public bool ShowDialogueId { get; set; } = false;
         public bool ShowArticyId { get; set; } = false;
+        public bool EnableTranslation { get; set; } = false;
+        public bool ShowSource { get; set; } = false;
+
+        public bool ShowCondition { get; set; } = true;
 
         public DialogueSimulator(DialogueDatabase db, DialogueNumber dialogueNo, DialogueId dialogueId, WeblateClient wlc)
         {
@@ -48,7 +54,7 @@ namespace DiscoDialogSimulator
             bool isRedCheck = dialogue.IsRedCheck();
             bool isPassiveCheck = dialogue.IsPassiveCheck();
 
-            if (ShowArticyId || ShowDialogueId)
+            if (ShowDialogueNo || ShowArticyId || ShowDialogueId)
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -94,7 +100,7 @@ namespace DiscoDialogSimulator
 
             if (dialogue.ContainsKey(FieldNames.DIALOGUE_TEXT))
             {
-                paragraph.Inlines.Add(MakeDialogueHyperlinkText(dialogue, FieldNames.DIALOGUE_TEXT));
+                paragraph.Inlines.Add(MakeDialogueHyperlinkText(dialogue, FieldNames.DIALOGUE_TEXT, "\n"));
                 hasBody = true;
             }
 
@@ -104,7 +110,15 @@ namespace DiscoDialogSimulator
                 {
                     if (string.IsNullOrWhiteSpace(dialogue["Alternate" + i])) continue;
 
-                    var alternativeRun = MakeDialogueHyperlinkText(dialogue, "Alternate" + i);
+                    if (ShowCondition)
+                    {
+                        var conditionRun = new Run($"\nCondition{i} : {dialogue["Condition" + i]}");
+                        conditionRun.FontSize = 14;
+                        conditionRun.Foreground = Brushes.Gray;
+                        paragraph.Inlines.Add(conditionRun);
+                    }
+
+                    var alternativeRun = MakeDialogueHyperlinkText(dialogue, "Alternate" + i, "\n");
                     alternativeRun.Foreground = Brushes.DarkSlateGray;
                     paragraph.Inlines.Add(new Run("\nAlternate" + i + " : "));
                     paragraph.Inlines.Add(alternativeRun);
@@ -118,7 +132,7 @@ namespace DiscoDialogSimulator
                 {
                     if (string.IsNullOrWhiteSpace(dialogue["tooltip" + i])) continue;
 
-                    var modifierRun = MakeDialogueHyperlinkText(dialogue, "tooltip" + i);
+                    var modifierRun = MakeDialogueHyperlinkText(dialogue, "tooltip" + i, " - ");
                     var modifier = dialogue["modifier" + i];
                     modifierRun.Inlines.Add(new Run(" " + modifier));
                     modifierRun.Foreground = Brushes.Gray;
@@ -128,7 +142,27 @@ namespace DiscoDialogSimulator
                 hasBody = true;
             }
 
-            return hasBody ? paragraph : null;
+            if (ShowCondition && !string.IsNullOrWhiteSpace(dialogue.userScript))
+            {
+                var scriptRun = new Run("\n" + dialogue.userScript);
+                scriptRun.Foreground = Brushes.Gray;
+                scriptRun.FontSize = 14;
+                paragraph.Inlines.Add(scriptRun);
+            }
+
+            if (hasBody)
+            {
+                return paragraph;
+            }
+            else if (dialogue.outgoingLinks.Count == 1)
+            {
+                if (dialogue.ContainsKey(FieldNames.ACTOR) && dialogue[FieldNames.ACTOR] != "0")
+                    paragraph.Inlines.Remove(paragraph.Inlines.LastInline);
+                var titleRun = new Run(dialogue[FieldNames.TITLE]);
+                paragraph.Inlines.Add(titleRun);
+                return paragraph;
+            }
+            return null;            
         }
 
         public IList<DialogueEntry> FindPreviousEntry(DialogueEntry targetEntry)
@@ -172,7 +206,7 @@ namespace DiscoDialogSimulator
                 }
 
                 if (nextEntry.ContainsKey(FieldNames.DIALOGUE_TEXT))
-                    text += GetTranslatedField(nextEntry, FieldNames.DIALOGUE_TEXT);
+                    text += GetTranslatedField(nextEntry, FieldNames.DIALOGUE_TEXT, " - ", out bool fuzzy, out bool approved);
                 else
                     text += nextEntry[FieldNames.TITLE];
                 text += "\n";
@@ -188,6 +222,14 @@ namespace DiscoDialogSimulator
                 if (isWhiteCheck) textLink.Foreground = Brushes.Gray;
 
                 paragraph.Inlines.Add(textLink);
+
+                if (nextEntry.ContainsKey(FieldNames.DIALOGUE_TEXT) && ShowCondition && !string.IsNullOrWhiteSpace(nextEntry.conditionsString))
+                {
+                    var conditionRun = new Run(nextEntry.conditionsString + "\n");
+                    conditionRun.FontSize = 14;
+                    conditionRun.Foreground = Brushes.Gray;
+                    paragraph.Inlines.Add(conditionRun);
+                }
             }
 
             return paragraph;
@@ -208,31 +250,54 @@ namespace DiscoDialogSimulator
             return db.GetDialogueEntry(articyId);
         }
 
-        public Hyperlink MakeDialogueHyperlinkText(DialogueEntry entry, string fieldName)
+        public Hyperlink MakeDialogueHyperlinkText(DialogueEntry entry, string fieldName, string separator)
         {
             int no = dialogueNo[fieldName + "/" + entry[FieldNames.ARTICY_ID]];
-            var textRun = new Run(GetTranslatedField(entry, fieldName));
+            var message = GetTranslatedField(entry, fieldName, separator, out bool fuzzy, out bool approved);
+            if (ShowDialogueNo)
+                message = $"D{no}:{message}";
+            var textRun = new Run(message);
+
+            if (fuzzy)
+                textRun.Foreground = Brushes.DarkRed;
+            if (approved)
+                textRun.Foreground = Brushes.DarkGreen;
+
             Hyperlink textLink = new Hyperlink(textRun)
             {
                 NavigateUri = new Uri("http://akintos.iptime.org/translate/disco-elysium/dialogue/ko/?offset=" + no),
-                TextDecorations = null,            // Remove underline
-                Foreground = Brushes.Black        // Remove blue hyperlink color
+                TextDecorations = null,       // Remove underline
+                Foreground = Brushes.Black    // Remove blue hyperlink color
             };
             textLink.RequestNavigate += NavigateHandler;
 
             return textLink;
         }
 
-        private string GetTranslatedField(DialogueEntry entry, string fieldName)
+        private string GetTranslatedField(DialogueEntry entry, string fieldName, string separator, out bool fuzzy, out bool approved)
         {
+            fuzzy = false;
+            approved = false;
+
+            string source = entry[fieldName];
             string key = fieldName + "/" + entry[FieldNames.ARTICY_ID];
-            if (wlc != null && dialogueId != null && dialogueId.TryGetValue(key, out int id))
+            if (EnableTranslation && wlc != null && dialogueId != null && dialogueId.TryGetValue(key, out int id))
             {
                 var tr = wlc.GetTranslation(id);
-                if (tr != null && tr.translated)
+                if (tr == null || (!tr.translated && !tr.fuzzy))
+                    return source;
+
+                if (fuzzy = tr.fuzzy)
+                    tr.target = "[수정 필요] " + tr.target;
+                approved = tr.approved;
+
+                if (ShowSource)
+                    return source + separator + tr.target;
+                else
                     return tr.target;
             }
-            return entry[fieldName];
+            return source;
         }
     }
 }
+;
