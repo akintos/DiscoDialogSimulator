@@ -219,7 +219,7 @@ namespace DiscoDialogSimulator
                     if (history.Contains(currentEntry))
                         break;
 
-                    if (currentEntry.outgoingLinks.Count == 1)
+                    if (currentEntry.HasBody() || currentEntry.outgoingLinks.Count == 1)
                         history.Add(currentEntry);
                 }
 

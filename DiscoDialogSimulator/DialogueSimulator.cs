@@ -86,7 +86,16 @@ namespace DiscoDialogSimulator
             else if (isPassiveCheck)
             {
                 int difficulty = ArticyBridge.GetDifficultyValue(int.Parse(dialogue[FieldNames.DIFFICULTYPASS]));
-                var checkRun = new Run($"[Passive check {difficulty}] ");
+                Run checkRun;
+                if (dialogue.IsAlsoAntipassive())
+                {
+                    checkRun = new Run($"[Passive check {difficulty} FAIL] ");
+                    checkRun.Foreground = Brushes.Red;
+                }
+                else
+                {
+                    checkRun = new Run($"[Passive check {difficulty}] ");
+                }
                 paragraph.Inlines.Add(checkRun);
             }
 
@@ -292,7 +301,7 @@ namespace DiscoDialogSimulator
                 approved = tr.approved;
 
                 if (ShowSource)
-                    return source + separator + tr.target;
+                    return tr.source + separator + tr.target;
                 else
                     return tr.target;
             }

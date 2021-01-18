@@ -9,10 +9,7 @@ namespace DiscoDialogSimulator.Database.Assets
 {
     public class DialogueEntry : Asset
     {
-        public override string ToString()
-        {
-            return LookupValue("Title");
-        }
+        public override string ToString() => LookupValue("Title");
 
         public bool IsJanusNode() => ContainsKey("Condition1");
         public bool IsWhiteCheck() => ContainsKey("DifficultyWhite");
@@ -21,6 +18,8 @@ namespace DiscoDialogSimulator.Database.Assets
         public bool IsAlsoAntipassive() => ContainsKey("Antipassive");
         public bool IsCostOptionNode() => ContainsKey("ClickCost");
         public int GetCost() => int.Parse(this["ClickCost"]);
+
+        public bool HasBody() => ContainsKey(FieldNames.DIALOGUE_TEXT);
 
 
         public int conversationID { get; set; }
