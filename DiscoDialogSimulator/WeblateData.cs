@@ -8,18 +8,26 @@ using System.Threading.Tasks;
 
 namespace DiscoDialogSimulator
 {
-    public class DialogueId : Dictionary<string, int>
+    public class WeblateData : Dictionary<string, DialogueUnit>
     {
-        public static DialogueId LoadJson(string path)
+        public static WeblateData LoadJson(string path)
         {
             var serializer = new JsonSerializer();
 
             using (var reader = new StreamReader(path))
             using (var jsonReader = new JsonTextReader(reader))
             {
-                return serializer.Deserialize<DialogueId>(jsonReader);
+                return serializer.Deserialize<WeblateData>(jsonReader);
             }
         }
+    }
 
+    public class DialogueUnit
+    {
+        [JsonProperty]
+        public int id { get; set; }
+
+        [JsonProperty]
+        public int position { get; set; }
     }
 }

@@ -7,19 +7,19 @@ namespace DiscoDialogSimulator
     public class WeblateClient
     {
         private readonly string baseUrl;
+        private readonly HttpClient client;
+        private readonly WeblateData data;
 
-        private HttpClient client;
-
-        public WeblateClient(string baseUrl, string key)
+        public WeblateClient(string baseUrl, string key, WeblateData data)
         {
             this.baseUrl = baseUrl;
+            this.data = data;
 
             client = new HttpClient();
 
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/javascript"));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", key);
-            
         }
 
         /// <summary>
@@ -43,9 +43,21 @@ namespace DiscoDialogSimulator
             return default;
         }
 
-        public TranslationUnit GetTranslation(int id)
+        public bool TryGetTranslation(string key, out TranslationUnit unit)
         {
-            return Request<TranslationUnit>("units/" + id + "/");
+            unit = null;
+            if (data.TryGetValue(key, out var value))
+            {
+                unit = Request<TranslationUnit>("units/" + value.id + "/");
+                return true;
+            }
+            return false;
+        }
+
+        public string GetDialogueLink(string key)
+        {
+            int position = data[key].position;
+            return "http://akintos.iptime.org/translate/disco-elysium/dialogue/ko/?offset=" + position;
         }
     }
 

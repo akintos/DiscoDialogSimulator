@@ -17,27 +17,17 @@ namespace DiscoDialogSimulator
     public class DialogueSimulator
     {
         private readonly DialogueDatabase db;
-        private readonly DialogueNumber dialogueNo;
-
-        private readonly DialogueId dialogueId;
         private readonly WeblateClient wlc;
 
         public event RequestNavigateEventHandler NavigateHandler;
 
-        public bool ShowDialogueNo { get; set; } = false;
-        public bool ShowDialogueId { get; set; } = false;
-        public bool ShowArticyId { get; set; } = false;
-        public bool EnableTranslation { get; set; } = false;
-        public bool ShowSource { get; set; } = false;
+        private SettingsManager settings;
 
-        public bool ShowCondition { get; set; } = true;
-
-        public DialogueSimulator(DialogueDatabase db, DialogueNumber dialogueNo, DialogueId dialogueId, WeblateClient wlc)
+        public DialogueSimulator(DialogueDatabase db, WeblateClient wlc, SettingsManager settings)
         {
             this.db = db;
-            this.dialogueNo = dialogueNo;
-            this.dialogueId = dialogueId;
             this.wlc = wlc;
+            this.settings = settings;
         }
 
         public Paragraph GetDialogueParagraph(int conversationId, int dialogueId)
@@ -45,49 +35,51 @@ namespace DiscoDialogSimulator
             return GetDialogueParagraph(db.GetDialogueEntry(conversationId, dialogueId));
         }
 
+        private Run GetDialogueNumberRun(DialogueEntry dialogue)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("[");
+            if (settings.ShowDialogueId)
+                sb.Append(dialogue.conversationID + "/" + dialogue.id);
+            if (settings.ShowArticyId && settings.ShowDialogueId)
+                sb.Append(":");
+            if (settings.ShowArticyId)
+                sb.Append(dialogue[FieldNames.ARTICY_ID]);
+            sb.Append("]\n");
+
+            var numberRun = new Run(sb.ToString());
+            numberRun.Foreground = Brushes.Gray;
+
+            return numberRun;
+        }
+
         public Paragraph GetDialogueParagraph(DialogueEntry dialogue)
         {
             var hasBody = false;
             var paragraph = new Paragraph();
 
-            bool isWhiteCheck = dialogue.IsWhiteCheck();
-            bool isRedCheck = dialogue.IsRedCheck();
-            bool isPassiveCheck = dialogue.IsPassiveCheck();
-
-            if (ShowDialogueNo || ShowArticyId || ShowDialogueId)
+            if (settings.ShowDialogueNo || settings.ShowArticyId || settings.ShowDialogueId)
             {
-                StringBuilder sb = new StringBuilder();
-
-                sb.Append("[");
-                if (ShowDialogueId)
-                    sb.Append(dialogue.conversationID + "/" + dialogue.id);
-                if (ShowArticyId && ShowDialogueId)
-                    sb.Append(":");
-                if (ShowArticyId)
-                    sb.Append(dialogue[FieldNames.ARTICY_ID]);
-                sb.Append("]\n");
-
-                var numberRun = new Run(sb.ToString());
-                numberRun.Foreground = Brushes.Gray;
+                var numberRun = GetDialogueNumberRun(dialogue);
                 paragraph.Inlines.Add(numberRun);
             }
-
-            if (isWhiteCheck || isRedCheck)
+            if (dialogue.IsActiveCheck)
             {
-                var skillName = ArticyBridge.ArticyIdToSkillName[dialogue[FieldNames.SKILLTYPE]];
-                var difficultyId = isWhiteCheck ? dialogue[FieldNames.DIFFICULTYWHITE] : dialogue[FieldNames.DIFFICULTYRED];
+                var skillName = dialogue[FieldNames.SKILLTYPE];
+                var difficultyId = dialogue.IsWhiteCheck ? dialogue[FieldNames.DIFFICULTYWHITE] : dialogue[FieldNames.DIFFICULTYRED];
                 int difficulty = ArticyBridge.GetDifficultyValue(int.Parse(difficultyId));
 
                 var checkRun = new Run($"[{skillName} {difficulty}] ");
-                checkRun.Foreground = isWhiteCheck ? Brushes.Gray : Brushes.Red;
+                checkRun.Foreground = dialogue.IsWhiteCheck ? Brushes.Gray : Brushes.Red;
 
                 paragraph.Inlines.Add(checkRun);
             }
-            else if (isPassiveCheck)
+            else if (dialogue.IsPassiveCheck)
             {
                 int difficulty = ArticyBridge.GetDifficultyValue(int.Parse(dialogue[FieldNames.DIFFICULTYPASS]));
                 Run checkRun;
-                if (dialogue.IsAlsoAntipassive())
+                if (dialogue.IsAlsoAntipassive)
                 {
                     checkRun = new Run($"[Passive check {difficulty} FAIL] ");
                     checkRun.Foreground = Brushes.Red;
@@ -107,19 +99,19 @@ namespace DiscoDialogSimulator
                 paragraph.Inlines.Add(actorRun);
             }
 
-            if (dialogue.ContainsKey(FieldNames.DIALOGUE_TEXT))
+            if (dialogue.TryGetValue(FieldNames.DIALOGUE_TEXT, out var dialoguetext) && !string.IsNullOrEmpty(dialoguetext))
             {
                 paragraph.Inlines.Add(MakeDialogueHyperlinkText(dialogue, FieldNames.DIALOGUE_TEXT, "\n"));
                 hasBody = true;
             }
 
-            if (dialogue.IsJanusNode())
+            if (dialogue.IsJanusNode)
             {
                 for (int i = 1; i <= 4; i++)
                 {
                     if (string.IsNullOrWhiteSpace(dialogue["Alternate" + i])) continue;
 
-                    if (ShowCondition)
+                    if (settings.ShowCondition)
                     {
                         var conditionRun = new Run($"\nCondition{i} : {dialogue["Condition" + i]}");
                         conditionRun.FontSize = 14;
@@ -135,7 +127,7 @@ namespace DiscoDialogSimulator
                 hasBody = true;
             }
 
-            if (isWhiteCheck || isRedCheck)
+            if (dialogue.IsActiveCheck)
             {
                 for (int i = 1; i <= 10; i++)
                 {
@@ -151,7 +143,7 @@ namespace DiscoDialogSimulator
                 hasBody = true;
             }
 
-            if (ShowCondition && !string.IsNullOrWhiteSpace(dialogue.userScript))
+            if (settings.ShowCondition && !string.IsNullOrWhiteSpace(dialogue.userScript))
             {
                 var scriptRun = new Run("\n" + dialogue.userScript);
                 scriptRun.Foreground = Brushes.Gray;
@@ -203,18 +195,15 @@ namespace DiscoDialogSimulator
 
                 string text = $"{i + 1}. ";
 
-                bool isRedCheck = nextEntry.IsRedCheck();
-                bool isWhiteCheck = nextEntry.IsWhiteCheck();
-
-                if (isRedCheck || isWhiteCheck)
+                if (nextEntry.IsActiveCheck)
                 {
-                    var skillName = ArticyBridge.ArticyIdToSkillName[nextEntry[FieldNames.SKILLTYPE]];
-                    var difficultyId = isWhiteCheck ? nextEntry[FieldNames.DIFFICULTYWHITE] : nextEntry[FieldNames.DIFFICULTYRED];
+                    var skillName = nextEntry[FieldNames.SKILLTYPE];
+                    var difficultyId = nextEntry.IsWhiteCheck ? nextEntry[FieldNames.DIFFICULTYWHITE] : nextEntry[FieldNames.DIFFICULTYRED];
                     int difficulty = ArticyBridge.GetDifficultyValue(int.Parse(difficultyId));
                     text += $"[{skillName} {difficulty}] ";
                 }
 
-                if (nextEntry.ContainsKey(FieldNames.DIALOGUE_TEXT))
+                if (nextEntry.HasBody)
                     text += GetTranslatedField(nextEntry, FieldNames.DIALOGUE_TEXT, " - ", out bool fuzzy, out bool approved);
                 else
                     text += nextEntry[FieldNames.TITLE];
@@ -227,12 +216,12 @@ namespace DiscoDialogSimulator
                 textLink.Foreground = Brushes.Black;        // Remove blue hyperlink color
                 textLink.RequestNavigate += NavigateHandler;
 
-                if (isRedCheck) textLink.Foreground = Brushes.Red;
-                if (isWhiteCheck) textLink.Foreground = Brushes.Gray;
+                if (nextEntry.IsRedCheck) textLink.Foreground = Brushes.Red;
+                if (nextEntry.IsWhiteCheck) textLink.Foreground = Brushes.Gray;
 
                 paragraph.Inlines.Add(textLink);
 
-                if (nextEntry.ContainsKey(FieldNames.DIALOGUE_TEXT) && ShowCondition && !string.IsNullOrWhiteSpace(nextEntry.conditionsString))
+                if (nextEntry.ContainsKey(FieldNames.DIALOGUE_TEXT) && settings.ShowCondition && !string.IsNullOrWhiteSpace(nextEntry.conditionsString))
                 {
                     var conditionRun = new Run(nextEntry.conditionsString + "\n");
                     conditionRun.FontSize = 14;
@@ -261,10 +250,10 @@ namespace DiscoDialogSimulator
 
         public Hyperlink MakeDialogueHyperlinkText(DialogueEntry entry, string fieldName, string separator)
         {
-            int no = dialogueNo[fieldName + "/" + entry[FieldNames.ARTICY_ID]];
+            string key = fieldName + "/" + entry[FieldNames.ARTICY_ID];
             var message = GetTranslatedField(entry, fieldName, separator, out bool fuzzy, out bool approved);
-            if (ShowDialogueNo)
-                message = $"D{no}:{message}";
+            //if (settings.ShowDialogueNo)
+            //    message = $"D{no}:{message}";
             var textRun = new Run(message);
 
             if (fuzzy)
@@ -274,7 +263,7 @@ namespace DiscoDialogSimulator
 
             Hyperlink textLink = new Hyperlink(textRun)
             {
-                NavigateUri = new Uri("http://akintos.iptime.org/translate/disco-elysium/dialogue/ko/?offset=" + no),
+                NavigateUri = new Uri(wlc.GetDialogueLink(key)),
                 TextDecorations = null,       // Remove underline
                 Foreground = Brushes.Black    // Remove blue hyperlink color
             };
@@ -290,17 +279,16 @@ namespace DiscoDialogSimulator
 
             string source = entry[fieldName];
             string key = fieldName + "/" + entry[FieldNames.ARTICY_ID];
-            if (EnableTranslation && wlc != null && dialogueId != null && dialogueId.TryGetValue(key, out int id))
+            if (settings.EnableTranslation && wlc != null && wlc.TryGetTranslation(key, out var tr))
             {
-                var tr = wlc.GetTranslation(id);
-                if (tr == null || (!tr.translated && !tr.fuzzy))
+                if (!tr.translated && !tr.fuzzy)
                     return source;
 
                 if (fuzzy = tr.fuzzy)
                     tr.target = "[수정 필요] " + tr.target;
                 approved = tr.approved;
 
-                if (ShowSource)
+                if (settings.ShowSource)
                     return tr.source + separator + tr.target;
                 else
                     return tr.target;

@@ -11,15 +11,15 @@ namespace DiscoDialogSimulator.Database.Assets
     {
         public override string ToString() => LookupValue("Title");
 
-        public bool IsJanusNode() => ContainsKey("Condition1");
-        public bool IsWhiteCheck() => ContainsKey("DifficultyWhite");
-        public bool IsRedCheck() => ContainsKey("DifficultyRed");
-        public bool IsPassiveCheck() => ContainsKey("DifficultyPass");
-        public bool IsAlsoAntipassive() => ContainsKey("Antipassive");
-        public bool IsCostOptionNode() => ContainsKey("ClickCost");
-        public int GetCost() => int.Parse(this["ClickCost"]);
-
-        public bool HasBody() => ContainsKey(FieldNames.DIALOGUE_TEXT);
+        public bool IsJanusNode => ContainsKey("Condition1");
+        public bool IsActiveCheck => IsWhiteCheck || IsRedCheck;
+        public bool IsWhiteCheck => ContainsKey("DifficultyWhite");
+        public bool IsRedCheck => ContainsKey("DifficultyRed");
+        public bool IsPassiveCheck => ContainsKey("DifficultyPass");
+        public bool IsAlsoAntipassive => ContainsKey("Antipassive");
+        public bool IsCostOptionNode => ContainsKey("ClickCost");
+        public int Cost => int.Parse(this["ClickCost"]);
+        public bool HasBody => TryGetValue(FieldNames.DIALOGUE_TEXT, out var value) && !string.IsNullOrEmpty(value);
 
 
         public int conversationID { get; set; }

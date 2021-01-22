@@ -18,7 +18,7 @@ namespace DiscoDialogSimulator.Database
         {
             var serializer = new JsonSerializer();
 
-            serializer.Converters.Add(new FieldsConverter());
+            // serializer.Converters.Add(new FieldsConverter());
 
             using (var reader = new StreamReader(path))
             using (var jsonReader = new JsonTextReader(reader))

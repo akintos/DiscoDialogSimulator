@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace DiscoDialogSimulator
 {
@@ -30,23 +31,47 @@ namespace DiscoDialogSimulator
 
         private Paragraph lastResponseParagraph;
 
+        private SettingsManager settings;
+
         public MainWindow()
         {
             InitializeComponent();
 
             var db = DialogueDatabase.Deserialize("data/database.json");
-            var dialogueNo = DialogueNumber.LoadJson("data/dialogue_no.json");
-            var dialogueId = DialogueId.LoadJson("data/dialogue_id.json");
+            var wlData = WeblateData.LoadJson("data/weblate.json");
+            var wlc = GetWeblateClient(wlData, out string authResult);
 
+            LabelAuth.Content = "인증 결과 : " + authResult;
+
+            settings = SettingsManager.GetInstance();
+
+            CheckBoxShowSource.IsChecked = settings.ShowSource;
+            CheckBoxShowDialogueNo.IsChecked = settings.ShowDialogueNo;
+            CheckBoxShowDialogueId.IsChecked = settings.ShowDialogueId;
+            CheckBoxShowCondition.IsChecked = settings.ShowCondition;
+            CheckBoxShowArticyId.IsChecked = settings.ShowArticyId;
+            CheckBoxEnableTranslation.IsChecked = settings.EnableTranslation;
+
+            sim = new DialogueSimulator(db, wlc, settings);
+            sim.NavigateHandler += HandleRequestNavigate;
+
+            DataObject.AddPastingHandler(TextBoxArticyID, OnPaste);
+
+            RichTextBoxDialogue.Document = new FlowDocument();
+
+            AddParagraph(new Paragraph(new Run("Enter Conversation/Dialogue/Articy ID and press [Start] button.")));
+        }
+
+        private WeblateClient GetWeblateClient(WeblateData wlData, out string authResult)
+        {
             WeblateClient wlc = null;
-            string authResult = string.Empty;
 
             if (File.Exists(KEY_FILENAME))
             {
                 string key = File.ReadAllText(KEY_FILENAME).Trim();
                 if (key.Length == 40)
                 {
-                    wlc = new WeblateClient("http://akintos.iptime.org/api/", key);
+                    wlc = new WeblateClient("http://akintos.iptime.org/api/", key, wlData);
                     if (!wlc.TestAuth("disco-elysium"))
                     {
                         wlc = null;
@@ -63,50 +88,7 @@ namespace DiscoDialogSimulator
             else
                 authResult = "키 파일이 없음";
 
-            LabelAuth.Content = "인증 결과 : " + authResult;
-
-            sim = new DialogueSimulator(db, dialogueNo, dialogueId, wlc);
-            sim.NavigateHandler += HandleRequestNavigate;
-
-            RichTextBoxDialogue.Document = new FlowDocument();
-
-            AddParagraph(new Paragraph(new Run("Enter Conversation/Dialogue/Articy ID and press [Start] button.")));
-
-            ReadConfiguration();
-        }
-
-        private void ReadConfiguration()
-        {
-            CheckBoxShowArticyId.IsChecked = sim.ShowArticyId = bool.Parse(ConfigurationManager.AppSettings["ShowArticyId"] ?? "false");
-            CheckBoxShowDialogueNo.IsChecked = sim.ShowDialogueNo = bool.Parse(ConfigurationManager.AppSettings["ShowDialogueNo"] ?? "false");
-            CheckBoxShowDialogueId.IsChecked =  sim.ShowDialogueId = bool.Parse(ConfigurationManager.AppSettings["ShowDialogueId"] ?? "false");
-            CheckBoxEnableTranslation.IsChecked = sim.EnableTranslation = bool.Parse(ConfigurationManager.AppSettings["EnableTranslation"] ?? "true");
-            CheckBoxShowSource.IsChecked = sim.ShowSource = bool.Parse(ConfigurationManager.AppSettings["ShowSource"] ?? "false");
-            CheckBoxShowCondition.IsChecked = sim.ShowCondition = bool.Parse(ConfigurationManager.AppSettings["ShowCondition"] ?? "false");
-            SaveConfiguration();
-        }
-
-        private void SaveConfiguration()
-        {
-            try
-            {
-                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                var settings = configFile.AppSettings.Settings;
-
-                settings.SaveSetting("ShowArticyId", sim.ShowArticyId.ToString());
-                settings.SaveSetting("ShowDialogueNo", sim.ShowDialogueId.ToString());
-                settings.SaveSetting("ShowDialogueId", sim.ShowDialogueId.ToString());
-                settings.SaveSetting("EnableTranslation", sim.EnableTranslation.ToString());
-                settings.SaveSetting("ShowSource", sim.ShowSource.ToString());
-                settings.SaveSetting("ShowCondition", sim.ShowCondition.ToString());
-
-                configFile.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
-            }
-            catch (ConfigurationErrorsException)
-            {
-                Console.WriteLine("Error writing app settings");
-            }
+            return wlc;
         }
 
         private void ShowDialogueEntry(int conversationId, int dialogueId)
@@ -190,6 +172,22 @@ namespace DiscoDialogSimulator
             LabelArticyID.Visibility = string.IsNullOrEmpty((sender as TextBox)?.Text) ? Visibility.Visible : Visibility.Hidden;
         }
 
+        private void TextBoxInput_KeyDown(object sender, KeyEventArgs args)
+        {
+            if (args.Key == Key.Enter)
+            {
+                ButtonStart_Click(null, null);
+            }
+        }
+
+        private void OnPaste(object sender, DataObjectPastingEventArgs e)
+        {
+            this.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                ButtonStart_Click(null, null);
+            }));
+        }
+
         private void ButtonClear_Click(object sender, RoutedEventArgs e)
         {
             TextBoxConversation.Clear();
@@ -219,7 +217,7 @@ namespace DiscoDialogSimulator
                     if (history.Contains(currentEntry))
                         break;
 
-                    if (currentEntry.HasBody() || currentEntry.outgoingLinks.Count == 1)
+                    if (currentEntry.HasBody || currentEntry.outgoingLinks.Count == 1)
                         history.Add(currentEntry);
                 }
 
@@ -287,21 +285,17 @@ namespace DiscoDialogSimulator
         private void OptionCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             if (sender == CheckBoxShowDialogueNo)
-                sim.ShowDialogueNo = CheckBoxShowDialogueNo.IsChecked.Value;
+                settings.ShowDialogueNo = CheckBoxShowDialogueNo.IsChecked.Value;
             else if (sender == CheckBoxShowDialogueId)
-                sim.ShowDialogueId = CheckBoxShowDialogueId.IsChecked.Value;
+                settings.ShowDialogueId = CheckBoxShowDialogueId.IsChecked.Value;
             else if (sender == CheckBoxShowArticyId)
-                sim.ShowArticyId = CheckBoxShowArticyId.IsChecked.Value;
+                settings.ShowArticyId = CheckBoxShowArticyId.IsChecked.Value;
             else if (sender == CheckBoxEnableTranslation)
-                sim.EnableTranslation = CheckBoxEnableTranslation.IsChecked.Value;
+                settings.EnableTranslation = CheckBoxEnableTranslation.IsChecked.Value;
             else if (sender == CheckBoxShowSource)
-                sim.ShowSource = CheckBoxShowSource.IsChecked.Value;
+                settings.ShowSource = CheckBoxShowSource.IsChecked.Value;
             else if (sender == CheckBoxShowCondition)
-                sim.ShowCondition = CheckBoxShowCondition.IsChecked.Value;
-            else
-                return;
-
-            SaveConfiguration();
+                settings.ShowCondition = CheckBoxShowCondition.IsChecked.Value;
         }
     }
 }
